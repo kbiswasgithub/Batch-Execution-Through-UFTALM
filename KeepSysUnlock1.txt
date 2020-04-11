@@ -1,0 +1,6 @@
+Do While True
+   Set objShell = CreateObject("WScript.Shell")
+   objShell.SendKeys "{NUMLOCK}"
+   WScript.Sleep 30000
+   Set objShell = Nothing
+Loop

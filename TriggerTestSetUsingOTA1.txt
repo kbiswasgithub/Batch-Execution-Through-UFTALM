@@ -1,0 +1,81 @@
+'Koushik Biswas
+'03/31/2017
+
+CONST strHostName="VOHCHLOAD49"
+
+TerminateProcess "uft.exe"
+TerminateProcess  "UFTRemoteAgent.exe"
+TerminateProcess "excel.exe"
+TerminateProcess "wexectrl.exe"
+TerminateProcess "iexplore.exe"
+
+
+Dim objTDCon, objTreeMgr, objTestSetFolder, objTestSetList
+Dim objTestSet, objScheduler, objExecStatus, objTestExecStatus
+Dim strTestSetFolderPath, strTestSetName, strReportStatus, intCounter
+
+strQCURL = "https://almcardinal.saas.hpe.com/qcbin/"
+
+strQCDomain = "Business_Segment"
+
+strQCProject = "Pharma"
+
+strQCUser = "ashishkumar.sahoo"
+
+strQCPassword = ""
+
+strTestSetFolderPath = "Root\Projects - Build\P-Mod Automation\TDM Scenarios"
+
+strTestSetName = "SCORE_Create Purchase Order"
+
+Set objTDCon = CreateObject("TDApiOle80.TDConnection")
+
+objTDCon.InitConnectionEx strQCURL
+
+objTDCon.Login strQCUser, strQCPassword 
+
+objTDCon.Connect strQCDomain, strQCProject
+
+Set objTreeMgr = objTDCon.TestSetTreeManager
+Set objTestSetFolder = objTreeMgr.NodeByPath(strTestSetFolderPath)
+Set objTestSetList = objTestSetFolder.FindTestSets(strTestSetName)
+intCounter = 1
+'find test set object
+While intCounter <= objTestSetList.Count
+    Set objTestSet = objTestSetList.Item(intCounter)
+    If objTestSet.Name = strTestSetName Then
+        intCounter = objTestSetList.Count + 1
+    End If
+    intCounter = intCounter + 1
+Wend
+
+Set objScheduler = objTestSet.StartExecution("")
+
+objScheduler.TdHostName = strHostName
+objScheduler.Run
+
+'Wait for the test to run to completion.
+Set objExecStatus = objScheduler.ExecutionStatus
+While objExecStatus.Finished = False
+    objExecStatus.RefreshExecStatusInfo "all", True
+    If objExecStatus.Finished = False Then
+     WScript.sleep 5
+    End If
+Wend
+
+objTDCon.DisconnectProject
+
+
+
+Sub TerminateProcess(ProcessName)
+
+  Dim objWMIService, colProcessList
+  Set objWMIService = GetObject("winmgmts:" & "{impersonationLevel=impersonate}!\\"& strHostName &"\root\cimv2")
+  Set colProcessList = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name = '"& ProcessName &"'")
+  For Each objProcess in colProcessList 
+    objProcess.Terminate() 
+  Next  
+End sub 
+
+
+

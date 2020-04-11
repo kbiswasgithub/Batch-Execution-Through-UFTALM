@@ -1,0 +1,49 @@
+Call ElevateUAC
+
+' Create a WSH Shell object:
+Public wshShell 
+Set wshShell = CreateObject( "WScript.Shell" )
+
+' Create a new key:
+regKey = "HKEY_CLASSES_ROOT\Wow6432Node\CLSID\{C5CBD7B2-490C-45f5-8C40-B8C3D108E6D7}\"
+If findRegistryKey(regKey) = false Then
+    wshShell.RegWrite regKey, ""
+End If
+' Create a new "REG_SZ" value:
+wshShell.RegWrite regKey & "AppID", "{C5CBD7B2-490C-45f5-8C40-B8C3D108E6D7}", "REG_SZ"
+
+regKey = "HKEY_CLASSES_ROOT\Wow6432Node\AppID\{C5CBD7B2-490C-45f5-8C40-B8C3D108E6D7}\"
+If findRegistryKey(regKey) = false Then
+  wshShell.RegWrite regKey, ""
+End If
+  wshShell.RegWrite regKey & "DllSurrogate", "", "REG_SZ"
+
+regKey = "HKEY_LOCAL_MACHINE\Software\Classes\AppID\{C5CBD7B2-490C-45f5-8C40-B8C3D108E6D7}\"
+If findRegistryKey(regKey) = flase Then
+ wshShell.RegWrite regKey, ""
+End If
+MsgBox "Successfully updated the registry values"
+
+Function findRegistryKey(Key)
+  Dim oShell, entry
+  On Error Resume Next
+  entry = wshShell.RegRead(Key)
+  If Err.Number <> 0 Then
+    Err.Clear
+    findRegistryKey= False
+  Else
+    Err.Clear
+    findRegistryKey= True
+  End If
+End Function
+
+Sub ElevateUAC
+    If Not WScript.Arguments.Named.Exists("elevated") Then
+        'Launch the script again as administrator
+        With CreateObject("Shell.Application")
+        .ShellExecute "wscript.exe", """" & _
+            WScript.ScriptFullName & """ /elevated", "", "runas", 1
+            WScript.Quit
+        End With
+    End If
+End Sub
